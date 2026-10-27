@@ -1,0 +1,15 @@
+# Build files
+build/
+cmake-build-*/
+
+# Compiled files
+*.o
+*.out
+*.exe
+
+# macOS
+.DS_Store
+
+# Xcode user-specific files
+xcuserdata/
+DerivedData/
