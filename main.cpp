@@ -19,17 +19,18 @@ int main(int argc, const char * argv[]) {
     Field field(grid);
 
     
-    DirichletCondition bcWest(1);
-    bcWest.apply(field, Wall::west);
+    BoundaryConditions bcs;
+    bcs.set(Wall::west, std::make_unique<DirichletCondition>(1.0));
+    bcs.set(Wall::east, std::make_unique<DirichletCondition>(2.0));
+    bcs.set(Wall::north, std::make_unique<DirichletCondition>(3.0));
+    bcs.set(Wall::south, std::make_unique<DirichletCondition>(4.0));
     
-    DirichletCondition bcEast(2);
-    bcEast.apply(field, Wall::east);
+    bcs.apply(field);
+    field.printField();
     
-    DirichletCondition bcNorth(3);
-    bcNorth.apply(field, Wall::north);
-    
-    DirichletCondition bcSouth(4);
-    bcSouth.apply(field, Wall::south);
+    bcs.set(Wall::north, std::make_unique<ZeroGradientCondition>());
+    bcs.set(Wall::south, std::make_unique<ZeroGradientCondition>());
+    bcs.apply(field);
     
     field.printField();
     

@@ -5,10 +5,10 @@
 
 enum class Wall
 {
-    east,
-    west,
-    north,
-    south
+    east = 0,
+    west = 1,
+    north = 2,
+    south = 3
 };
 
 class BoundaryCondition
@@ -29,3 +29,19 @@ private:
     double value;
 };
 
+class ZeroGradientCondition: public BoundaryCondition
+{
+public:
+    // ZeroGradientCondition(){}; // default constructor is not needed
+    void apply(Field& field, Wall wall) const override;
+};
+
+class BoundaryConditions
+{
+public:
+    void set(Wall wall, std::unique_ptr<BoundaryCondition> condition);
+    void apply(Field& field) const;
+    
+private:
+    std::array<std::unique_ptr<BoundaryCondition>, 4> conditions;
+};
