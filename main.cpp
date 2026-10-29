@@ -3,6 +3,7 @@
 #include "Grid.h"
 #include "Field.h"
 #include "BoundaryCondition.h"
+#include "Laplacian.h"
 
 int main(int argc, const char * argv[]) {
 
@@ -34,8 +35,20 @@ int main(int argc, const char * argv[]) {
     
     field.printField();
     
-
+    field.setQuadraticField(grid);
     
+    field.printField();
+    
+    Field newField(grid);
+    for(int i=0; i<grid.get_nx(); i++)
+    {
+        for(int j=0; j<grid.get_ny(); j++)
+        {
+            newField(i,j) = calcLaplacian(field, grid, i, j);
+        }
+    }
+    
+    newField.printField();
     
     
     return 0;

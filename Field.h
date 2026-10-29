@@ -9,6 +9,7 @@ public:
     void printField();
     double& operator()(std::size_t i, std::size_t j);
     const double& operator()(std::size_t i, std::size_t j) const;
+    void setQuadraticField(const Grid& grid);
     
     size_t get_nx() const{ return nx;}
     size_t get_ny() const{ return ny;}

@@ -29,6 +29,17 @@ void Field::printField()
     
     std::cout << std::endl;
 }
+
+void Field::setQuadraticField(const Grid& grid)
+{
+    for(int i=0; i<grid.get_nx(); i++)
+    {
+        for(int j=0; j<grid.get_ny(); j++)
+        {
+            (*this)(i,j) = pow(grid.get_x(i),2) + pow(grid.get_y(j),2);
+        }
+    }
+}
     
     
     
