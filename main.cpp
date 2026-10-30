@@ -4,6 +4,7 @@
 #include "Field.h"
 #include "BoundaryCondition.h"
 #include "Laplacian.h"
+#include "DiffusionSolver.h"
 
 int main(int argc, const char * argv[]) {
 
@@ -49,6 +50,9 @@ int main(int argc, const char * argv[]) {
     }
     
     newField.printField();
+    
+    DiffusionSolver solver = DiffusionSolver(1, 1e-2);
+    solver.step(field, newField, grid, bcs);
     
     
     return 0;
