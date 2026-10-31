@@ -29,8 +29,8 @@ void DiffusionSolver::iterate(Field& current, const Grid& grid, const BoundaryCo
     {
         step(current, next, grid, bcs);
         std::swap(current, next);
-        double val = next.calcFieldAverage();
-        avgVals.push_back(val);
+
+        avgVals.push_back(next.calcFieldAverage());
     }
     printHistory();
 }

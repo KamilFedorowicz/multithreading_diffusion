@@ -17,7 +17,7 @@ public:
     size_t get_nx() const{ return nx;}
     size_t get_ny() const{ return ny;}
     void saveCSV(const std::string& filename) const;
-    double calcFieldAverage(); // just a function to check convergence
+    double calcFieldAverage() const; // just a function to check convergence
     
 private:
     std::size_t nx, ny;

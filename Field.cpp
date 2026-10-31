@@ -41,7 +41,7 @@ void Field::setQuadraticField(const Grid& grid)
     }
 }
 
-double Field::calcFieldAverage()
+double Field::calcFieldAverage() const
 {
     double sum = 0.0;
     
