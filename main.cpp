@@ -9,8 +9,10 @@
 
 int main(int argc, const char * argv[]) {
 
-    int nx = 50;
-    int ny = 50;
+    int nx = 1000;
+    int ny = 1000;
+    double dt = 1e-1;
+    int iterations  = 100;
 
     double xStart = 0.0;
     double yStart = 0.0;
@@ -29,8 +31,6 @@ int main(int argc, const char * argv[]) {
     
     //field.setQuadraticField(grid);
 
-    double dt = 1e-5;
-    int iterations  = 10000;
     // SERIAL CALCULATION
     Field fieldSerial(grid);
     DiffusionSolver serialSolver = DiffusionSolver(1, dt, iterations);
@@ -51,19 +51,19 @@ int main(int argc, const char * argv[]) {
     Field fieldMultithread(grid);
     DiffusionSolver multithreadSolver = DiffusionSolver(1, dt, iterations);
     ts0 = std::chrono::steady_clock::now();
-    multithreadSolver.iterateMultithread(fieldMultithread, grid, bcs);
+    multithreadSolver.iterateMultithread(fieldMultithread, grid, bcs, 3);
     ts1 = std::chrono::steady_clock::now();
 
     std::chrono::duration<double> multithreadElapsed = ts1 - ts0;
     
-    std::cout << "Serial calculation time: "
+    std::cout << "Multithread calculation time: "
               << multithreadElapsed.count()
               << " s\n";
     
     path = "/Users/Kamil/Desktop/cpp_projects/diffusion_multithreading/diffusion_multithreading/resMultithread.vtk";
     writeVTK(fieldMultithread, grid, path);
     
-    
+    std::cout << "Serial, multithread averages: " << fieldSerial.calcFieldAverage() << " " << fieldMultithread.calcFieldAverage() << std::endl;
     
     return 0;
 }

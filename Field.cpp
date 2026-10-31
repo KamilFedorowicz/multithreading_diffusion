@@ -128,5 +128,5 @@ void writeVTK(
         }
     }
     
-    std::cout << "Written to VTK! \n";
+    //std::cout << "Written to VTK! \n";
 }

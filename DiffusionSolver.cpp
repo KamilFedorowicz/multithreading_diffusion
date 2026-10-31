@@ -24,6 +24,10 @@ void DiffusionSolver::step(const Field& current, Field& next, const Grid& grid, 
 
 void DiffusionSolver::iterate(Field& current, const Grid& grid, const BoundaryConditions& bcs)
 {
+    // diffusive dt is delta_x^2/(2*D) but here divide by 4 to be safe
+    dt = pow(std::min(grid.get_dx(), grid.get_dy()),2) / (4 * diffusivity);
+    //std::cout << "dt: " << dt << std::endl;
+    
     Field next = Field(grid);
     
     for(size_t i = 0; i < iterations; i++)
@@ -35,35 +39,55 @@ void DiffusionSolver::iterate(Field& current, const Grid& grid, const BoundaryCo
     }
 }
 
-void DiffusionSolver::iterateMultithread(Field& current, const Grid& grid, const BoundaryConditions& bcs)
+void DiffusionSolver::iterateMultithread(Field& current, const Grid& grid, const BoundaryConditions& bcs, int nThreads)
 {
+    dt = pow(std::min(grid.get_dx(), grid.get_dy()),2) / (4 * diffusivity);
+    //std::cout << "dt: " << dt << std::endl;
+    
     Field next = Field(grid);
     
     for(size_t i = 0; i < iterations; i++)
     {
-        stepMultithread(current, next, grid, bcs);
+        stepMultithread(current, next, grid, bcs, nThreads);
         std::swap(current, next);
 
         avgVals.push_back(next.calcFieldAverage());
     }
 }
 
-void DiffusionSolver::stepMultithread(const Field& current, Field& next, const Grid& grid, const BoundaryConditions& bcs) const
+void DiffusionSolver::stepMultithread(const Field& current, Field& next, const Grid& grid, const BoundaryConditions& bcs, int nThreads) const
 {
-    int jMiddle = (int)(grid.get_ny()/2);
     
-    std::thread thread1([&]()
+    std::vector<std::thread> threads;
+    
+    const size_t jBegin = 1;
+    const size_t jEnd = grid.get_ny() - 1;
+    
+    const size_t nRows = jEnd - jBegin;
+    const size_t rowsPerThread = nRows/nThreads;
+    
+    for(std::size_t t = 0; t < nThreads; t++)
     {
-        updateRows(current, next, grid, 1, jMiddle);
-    });
+        size_t start = jBegin + t * rowsPerThread;
+        size_t end = start + rowsPerThread;
+        
+        if(t == nThreads - 1)
+        {
+            end = jEnd;
+        }
+        
+        threads.emplace_back([&, start, end]()
+                             {
+                                 updateRows(current, next, grid, start, end);
+                             }
+                             );
+        
+    }
     
-    std::thread thread2([&]()
+    for (auto& thread: threads)
     {
-        updateRows(current, next, grid, jMiddle, grid.get_ny()-1);
-    });
-    
-    thread1.join();
-    thread2.join();
+        thread.join();
+    }
     
     bcs.apply(next);
 
