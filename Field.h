@@ -1,6 +1,9 @@
 #pragma once
 #include "Grid.h"
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <stdexcept>
 
 class Field
 {
@@ -13,8 +16,15 @@ public:
     
     size_t get_nx() const{ return nx;}
     size_t get_ny() const{ return ny;}
+    void saveCSV(const std::string& filename) const;
+    double calcFieldAverage(); // just a function to check convergence
     
 private:
     std::size_t nx, ny;
     std::vector<double> values;
 };
+
+void writeVTK(
+    const Field& field,
+    const Grid& grid,
+              const std::string& filename);

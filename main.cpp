@@ -8,8 +8,8 @@
 
 int main(int argc, const char * argv[]) {
 
-    int nx = 10;
-    int ny = 20;
+    int nx = 50;
+    int ny = 50;
 
     double xStart = 0.0;
     double yStart = 0.0;
@@ -23,36 +23,22 @@ int main(int argc, const char * argv[]) {
     
     BoundaryConditions bcs;
     bcs.set(Wall::west, std::make_unique<DirichletCondition>(1.0));
-    bcs.set(Wall::east, std::make_unique<DirichletCondition>(2.0));
-    bcs.set(Wall::north, std::make_unique<DirichletCondition>(3.0));
-    bcs.set(Wall::south, std::make_unique<DirichletCondition>(4.0));
-    
-    bcs.apply(field);
-    field.printField();
-    
-    bcs.set(Wall::north, std::make_unique<ZeroGradientCondition>());
+    bcs.set(Wall::east, std::make_unique<DirichletCondition>(0.0));
+    bcs.set(Wall::north, std::make_unique<DirichletCondition>(1.0));
     bcs.set(Wall::south, std::make_unique<ZeroGradientCondition>());
-    bcs.apply(field);
-    
-    field.printField();
+    //bcs.set(Wall::south, std::make_unique<DirichletCondition>(0.0));
     
     field.setQuadraticField(grid);
     
     field.printField();
+
     
-    Field newField(grid);
-    for(int i=0; i<grid.get_nx(); i++)
-    {
-        for(int j=0; j<grid.get_ny(); j++)
-        {
-            newField(i,j) = calcLaplacian(field, grid, i, j);
-        }
-    }
+    DiffusionSolver solver = DiffusionSolver(1, 1e-5, 10000);
+    solver.iterate(field, grid, bcs);
     
-    newField.printField();
+    std::string path = "/Users/Kamil/Desktop/cpp_projects/diffusion_multithreading/diffusion_multithreading/res.vtk";
     
-    DiffusionSolver solver = DiffusionSolver(1, 1e-2);
-    solver.step(field, newField, grid, bcs);
+    writeVTK(field, grid, path);
     
     
     return 0;

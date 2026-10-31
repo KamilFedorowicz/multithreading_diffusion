@@ -14,6 +14,9 @@ public:
     double get_x(std::size_t i) const { return x[i]; }
     double get_y(std::size_t j) const { return y[j]; }
     
+    double get_start_x() const { return start_x;}
+    double get_start_y() const { return start_y;}
+    
     void printGrid();
     
 private:

@@ -22,14 +22,14 @@ void DirichletCondition::apply(Field& field, Wall wall) const
         case Wall::south:
             for(std::size_t i=0; i < field.get_nx(); i++)
             {
-                field(i, field.get_ny()-1) = value;
+                field(i, 0) = value;
             }
             break;
             
         case Wall::north:
             for(std::size_t i=0; i < field.get_nx(); i++)
             {
-                field(i, 0) = value;
+                field(i, field.get_ny()-1) = value;
             }
             break;
             
@@ -57,14 +57,14 @@ void ZeroGradientCondition::apply(Field& field, Wall wall) const
             }
             break;
             
-        case Wall::south:
+        case Wall::north:
             for(std::size_t i=0; i < field.get_nx(); i++)
             {
                 field(i, field.get_ny()-1) = field(i, field.get_ny()-2);
             }
             break;
             
-        case Wall::north:
+        case Wall::south:
             for(std::size_t i=0; i < field.get_nx(); i++)
             {
                 field(i, 0) = field(i, 1);

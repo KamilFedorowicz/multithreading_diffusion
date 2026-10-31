@@ -1,12 +1,13 @@
 #include "DiffusionSolver.h"
 
-DiffusionSolver::DiffusionSolver(double diff_, double dt_)
+DiffusionSolver::DiffusionSolver(double diff_, double dt_, size_t iter_)
 {
     diffusivity = diff_;
     dt = dt_;
+    iterations = iter_;
 }
 
-void DiffusionSolver::step(const Field& current, Field& next, const Grid& grid, BoundaryConditions& bcs) const
+void DiffusionSolver::step(Field& current, Field& next, const Grid& grid, const BoundaryConditions& bcs) const
 {
     for(int i=1; i<grid.get_nx()-1; i++)
     {
@@ -16,8 +17,34 @@ void DiffusionSolver::step(const Field& current, Field& next, const Grid& grid, 
         }
     }
     
+    bcs.apply(next);
+
+}
+
+void DiffusionSolver::iterate(Field& current, const Grid& grid, const BoundaryConditions& bcs)
+{
+    Field next = Field(grid);
     
-    std::cout << "Printing the next field: " << std::endl;
-    next.printField();
+    for(size_t i = 0; i < iterations; i++)
+    {
+        step(current, next, grid, bcs);
+        std::swap(current, next);
+        double val = next.calcFieldAverage();
+        avgVals.push_back(val);
+    }
+    printHistory();
+}
+
+void DiffusionSolver::printHistory()
+{
+    std::cout << "Average values: \n";
+    for(int i=0; i < avgVals.size(); i++)
+    {
+        if(i%100 == 0)
+        {
+            std::cout << avgVals[i] << " ";
+        }
+    }
+    std::cout << std::endl;
 }
 
