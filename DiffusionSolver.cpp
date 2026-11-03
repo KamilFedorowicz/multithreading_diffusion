@@ -1,5 +1,5 @@
 #include "DiffusionSolver.h"
-
+#include <barrier>
 
 DiffusionSolver::DiffusionSolver(double diff_, double dt_, size_t iter_)
 {
@@ -110,7 +110,102 @@ void DiffusionSolver::updateRows(
     }
 }
 
-
+void DiffusionSolver::iteratePersistent(
+                                        Field& current,
+                                        const Grid& grid,
+                                        const BoundaryConditions& bcs,
+                                        std::size_t nThreads)
+{
+    dt = pow(std::min(grid.get_dx(), grid.get_dy()),2) / (4 * diffusivity);
+    Field next(grid);
+    
+    const std::size_t jBegin = 1;
+    const std::size_t jEnd = grid.get_ny() - 1;
+    const std::size_t nRows = jEnd - jBegin;
+    
+    // dont use more threads than rows
+    nThreads = std::min(nThreads, nRows);
+    
+    // all worker threads need to participate in the barrier
+    // create a barrier that expects exactly nThreads participants
+    std::barrier syncPoint(static_cast<std::ptrdiff_t>(nThreads));
+    
+    std::vector<std::thread> threads;
+    threads.reserve(nThreads);
+    
+    const std::size_t rowsPerThread = nRows / nThreads;
+    const std::size_t remainder = nRows % nThreads;
+    
+    std::size_t start = jBegin;
+    
+    for(std::size_t t=0; t<nThreads; t++)
+    {
+        // Give one extra row to the first 'remainder' threads
+        /*
+         imagine that we have 10 rows and 4 threads.
+         rowsPerThread = nRows / nThreads = 2, and remainder = 2.
+         In that case, the first two threads will additionally take the remainder row (1 each)
+         and the rest of the threads will take the unchanged number (i.e. rowsPerThread)
+         so eventually threads take 3,3,2,2 rows.
+         */
+        const std::size_t rows =
+        rowsPerThread + (t < remainder ? 1 : 0);
+        
+        const std::size_t end = start + rows;
+        
+        std::cout << "Thread " << t << ": [" << start << ", " << end << ")\n";
+        
+        threads.emplace_back(
+                             [&, t, start, end]()
+                             {
+                                 for (std::size_t iteration = 0;
+                                      iteration < iterations;
+                                      ++iteration)
+                                 {
+                                     // Each thread updates only its own rows
+                                     updateRows(
+                                                current,
+                                                next,
+                                                grid,
+                                                start,
+                                                end
+                                                );
+                                     
+                                     // wait until the entire interior is finished
+                                     // if this is commented, then multiple threads may modify the same state with no proper synchronisation
+                                     // swap(current, next) is problematic because it changes the underlying storage
+                                     syncPoint.arrive_and_wait();
+                                     
+                                     // exactly one thread applied bcs and swaps nodes
+                                     if (t == 0)
+                                     {
+                                         bcs.apply(next);
+                                         std::swap(current, next);
+                                         /*
+                                          if the thread is calculating laplacian and doing swap at the same time,
+                                          then current and next change. this is data race and undefined behaviour
+                                          */
+                                     }
+                                     
+                                     // Don't start the next iteration until
+                                     // BCs and swap are complete
+                                     syncPoint.arrive_and_wait();
+                                     
+                                     
+                                 }
+                             }
+                             );
+        start = end;
+    }
+    
+    // Threads have already performed all timesteps.
+    // Now wait for them to terminate.
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+    
+}
 
 
 

@@ -11,8 +11,9 @@ int main(int argc, const char * argv[]) {
 
     int nx = 1000;
     int ny = 1000;
-    double dt = 1e-1;
+    double dt = 1e-6;
     int iterations  = 100;
+    int nThreads = 10;
 
     double xStart = 0.0;
     double yStart = 0.0;
@@ -44,14 +45,17 @@ int main(int argc, const char * argv[]) {
               << serialElapsed.count()
               << " s\n";
     
+    // saving results
+    /*
     std::string path = "/Users/Kamil/Desktop/cpp_projects/diffusion_multithreading/diffusion_multithreading/resSerial.vtk";
     writeVTK(fieldSerial, grid, path);
+     */
     
     // MULTITHREAD CALCULATION
     Field fieldMultithread(grid);
     DiffusionSolver multithreadSolver = DiffusionSolver(1, dt, iterations);
     ts0 = std::chrono::steady_clock::now();
-    multithreadSolver.iterateMultithread(fieldMultithread, grid, bcs, 3);
+    multithreadSolver.iterateMultithread(fieldMultithread, grid, bcs, nThreads);
     ts1 = std::chrono::steady_clock::now();
 
     std::chrono::duration<double> multithreadElapsed = ts1 - ts0;
@@ -60,10 +64,27 @@ int main(int argc, const char * argv[]) {
               << multithreadElapsed.count()
               << " s\n";
     
+    // PERSISTENT CALCULATION
+    Field fieldPersistent(grid);
+    DiffusionSolver persistentSolver = DiffusionSolver(1, dt, iterations);
+    ts0 = std::chrono::steady_clock::now();
+    persistentSolver.iteratePersistent(fieldPersistent, grid, bcs, nThreads);
+    ts1 = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> persistentElapsed = ts1 - ts0;
+    
+    std::cout << "Persistent calculation time: "
+              << persistentElapsed.count()
+              << " s\n";
+    
+    // saving results
+    /*
     path = "/Users/Kamil/Desktop/cpp_projects/diffusion_multithreading/diffusion_multithreading/resMultithread.vtk";
     writeVTK(fieldMultithread, grid, path);
+     */
     
-    std::cout << "Serial, multithread averages: " << fieldSerial.calcFieldAverage() << " " << fieldMultithread.calcFieldAverage() << std::endl;
+    std::cout << "Serial, multithread, persistent averages: " << fieldSerial.calcFieldAverage() << " " << fieldMultithread.calcFieldAverage() << " " << fieldPersistent.calcFieldAverage() << std::endl;
     
+    //fieldPersistent.printField();
     return 0;
 }

@@ -18,6 +18,7 @@ public:
     void stepMultithread(const Field& current, Field& next, const Grid& grid, const BoundaryConditions& bcs, int nThreads) const;
     void iterateMultithread(Field& current, const Grid& grid, const BoundaryConditions& bcs, int nThreads);
     void updateRows(const Field& current, Field& next, const Grid& grid, std::size_t jBegin, std::size_t jEnd) const;
+    void iteratePersistent(Field& current, const Grid& grid, const BoundaryConditions& bcs, std::size_t nThreads);
     
     
 private:
