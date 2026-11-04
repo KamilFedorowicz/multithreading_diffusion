@@ -13,7 +13,7 @@ int main(int argc, const char * argv[]) {
     int ny = 1000;
     double dt = 1e-6;
     int iterations  = 100;
-    int nThreads = 10;
+    int nThreads = 5;
 
     double xStart = 0.0;
     double yStart = 0.0;

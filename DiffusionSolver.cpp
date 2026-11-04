@@ -128,7 +128,12 @@ void DiffusionSolver::iteratePersistent(
     
     // all worker threads need to participate in the barrier
     // create a barrier that expects exactly nThreads participants
-    std::barrier syncPoint(static_cast<std::ptrdiff_t>(nThreads));
+    std::barrier syncPoint(static_cast<std::ptrdiff_t>(nThreads), [&]()
+                           {
+        // completion function - once everything is finished, execute this function
+        bcs.apply(next);
+        std::swap(current, next);
+    });
     
     std::vector<std::thread> threads;
     threads.reserve(nThreads);
@@ -174,21 +179,6 @@ void DiffusionSolver::iteratePersistent(
                                      // wait until the entire interior is finished
                                      // if this is commented, then multiple threads may modify the same state with no proper synchronisation
                                      // swap(current, next) is problematic because it changes the underlying storage
-                                     syncPoint.arrive_and_wait();
-                                     
-                                     // exactly one thread applied bcs and swaps nodes
-                                     if (t == 0)
-                                     {
-                                         bcs.apply(next);
-                                         std::swap(current, next);
-                                         /*
-                                          if the thread is calculating laplacian and doing swap at the same time,
-                                          then current and next change. this is data race and undefined behaviour
-                                          */
-                                     }
-                                     
-                                     // Don't start the next iteration until
-                                     // BCs and swap are complete
                                      syncPoint.arrive_and_wait();
                                      
                                      
