@@ -1,5 +1,6 @@
 #include "DiffusionSolver.h"
 #include <barrier>
+#include <atomic>
 
 DiffusionSolver::DiffusionSolver(double diff_, double dt_, size_t iter_)
 {
@@ -116,6 +117,8 @@ void DiffusionSolver::iteratePersistent(
                                         const BoundaryConditions& bcs,
                                         std::size_t nThreads)
 {
+    std::atomic<std::size_t> completedUpdates = 0;
+    
     dt = pow(std::min(grid.get_dx(), grid.get_dy()),2) / (4 * diffusivity);
     Field next(grid);
     
@@ -175,7 +178,7 @@ void DiffusionSolver::iteratePersistent(
                                                 start,
                                                 end
                                                 );
-                                     
+                                     completedUpdates++;
                                      // wait until the entire interior is finished
                                      // if this is commented, then multiple threads may modify the same state with no proper synchronisation
                                      // swap(current, next) is problematic because it changes the underlying storage
@@ -194,6 +197,8 @@ void DiffusionSolver::iteratePersistent(
     {
         thread.join();
     }
+    
+    std::cout << "Completed updates: " << completedUpdates.load() << ", expected: " << nThreads * iterations << std::endl;
     
 }
 

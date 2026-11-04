@@ -1,4 +1,5 @@
 #include "Field.h"
+#include <thread>
 
 Field::Field(const Grid& grid)
 : nx(grid.get_nx()),
@@ -52,6 +53,72 @@ double Field::calcFieldAverage() const
             sum += (*this)(i,j);
         }
     }
+    
+    return sum / (nx * ny);
+}
+
+double Field::calcFieldAverageMultithread() const
+{
+    double sum = 0.0;
+    std::vector<std::thread> threads;
+    int nThreads = 4;
+    std::vector<double> partialSum(nThreads);
+    
+    const std::size_t jStart = 0;
+    const std::size_t jEnd = get_ny();
+    
+    std::size_t rows = jEnd - jStart;
+    std::size_t rowsPerThread = rows / nThreads;
+    std::size_t remainder = rows % nThreads;
+    
+    std::size_t start = jStart;
+    
+    
+    for(int t=0; t<nThreads; t++)
+    {
+        std::size_t end;
+        if(t < remainder)
+        {
+            end = start + rowsPerThread + 1;
+        }
+        else
+        {
+            end = start + rowsPerThread;
+        }
+        
+        std::cout << "Thread " << t << ": [" << start << ", " << end << ")\n";
+        
+        threads.emplace_back(
+                             [&, t, start, end]()
+                             {
+                                 double localSum = 0;
+                                 for (std::size_t j = start; j < end; ++j)
+                                 {
+                                     for (std::size_t i = 0; i < nx; ++i)
+                                     {
+                                         localSum += (*this)(i,j);
+                                     }
+                                 }
+                                 partialSum[t] = localSum;
+                                 
+                             }
+
+                             );
+        start = end;
+        
+    
+    }
+    
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+    
+    for(double s: partialSum)
+    {
+        sum+=s;
+    }
+    
     
     return sum / (nx * ny);
 }

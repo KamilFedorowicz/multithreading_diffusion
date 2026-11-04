@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <stdexcept>
+#include <atomic>
 
 class Field
 {
@@ -18,6 +19,7 @@ public:
     size_t get_ny() const{ return ny;}
     void saveCSV(const std::string& filename) const;
     double calcFieldAverage() const; // just a function to check convergence
+    double calcFieldAverageMultithread() const;
     
 private:
     std::size_t nx, ny;

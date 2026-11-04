@@ -9,10 +9,10 @@
 
 int main(int argc, const char * argv[]) {
 
-    int nx = 1000;
-    int ny = 1000;
+    int nx = 50;
+    int ny = 50;
     double dt = 1e-6;
-    int iterations  = 100;
+    int iterations  = 10000;
     int nThreads = 5;
 
     double xStart = 0.0;
@@ -85,6 +85,9 @@ int main(int argc, const char * argv[]) {
     
     std::cout << "Serial, multithread, persistent averages: " << fieldSerial.calcFieldAverage() << " " << fieldMultithread.calcFieldAverage() << " " << fieldPersistent.calcFieldAverage() << std::endl;
     
+    double avgMultithread = fieldPersistent.calcFieldAverageMultithread();
+    
+    std::cout << "Multithreading sum: " << avgMultithread << std::endl;
     //fieldPersistent.printField();
     return 0;
 }
