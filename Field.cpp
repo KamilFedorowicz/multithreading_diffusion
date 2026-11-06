@@ -1,5 +1,6 @@
 #include "Field.h"
 #include <thread>
+#include <mutex>
 
 Field::Field(const Grid& grid)
 : nx(grid.get_nx()),
@@ -61,7 +62,7 @@ double Field::calcFieldAverageMultithread() const
 {
     double sum = 0.0;
     std::vector<std::thread> threads;
-    int nThreads = 4;
+    int nThreads = 4; // assume that 4 threads are used
     std::vector<double> partialSum(nThreads);
     
     const std::size_t jStart = 0;
@@ -86,7 +87,7 @@ double Field::calcFieldAverageMultithread() const
             end = start + rowsPerThread;
         }
         
-        std::cout << "Thread " << t << ": [" << start << ", " << end << ")\n";
+        //std::cout << "Thread " << t << ": [" << start << ", " << end << ")\n";
         
         threads.emplace_back(
                              [&, t, start, end]()
@@ -122,7 +123,98 @@ double Field::calcFieldAverageMultithread() const
     
     return sum / (nx * ny);
 }
+
+
+/*
+Mutex: protects a critical section so only one thread can execute it at a time.
+std::lock_guard: manages locking/unlocking a mutex safely.
+if mutex is locked and not unlocked (e.g. exception), then other threads can wait forever,
+which causes deacdlock. The solution is lock_guard
+when the execution leaves the scope, the destruction unlocks mutex
+*/
+double Field::calcFieldAverageMutex() const
+{
+    double sum = 0.0;
+    std::mutex sumMutex;
+    std::vector<std::thread> threads;
+    int nThreads = 4; // assume that 4 threads are used
     
+    const std::size_t jStart = 0;
+    const std::size_t jEnd = get_ny();
+    
+    std::size_t rows = jEnd - jStart;
+    std::size_t rowsPerThread = rows / nThreads;
+    std::size_t remainder = rows % nThreads;
+    
+    std::size_t start = jStart;
+    
+    // auto ts0 = std::chrono::steady_clock::now();
+    
+    for(int t=0; t<nThreads; t++)
+    {
+        std::size_t end;
+        if(t < remainder)
+        {
+            end = start + rowsPerThread + 1;
+        }
+        else
+        {
+            end = start + rowsPerThread;
+        }
+        
+        //std::cout << "Thread " << t << ": [" << start << ", " << end << ")\n";
+        
+        threads.emplace_back(
+                             [&, t, start, end]()
+                             {
+                                 
+                                 
+                                 double localSum = 0;
+                                 for (std::size_t j = start; j < end; ++j)
+                                 {
+                                     for (std::size_t i = 0; i < nx; ++i)
+                                     {
+                                         localSum += (*this)(i,j);
+                                     }
+                                 }
+                                 
+                                 /*
+                                  placing this before mutex increases the time by 100ms
+                                  placing this after mutex increases the time by 400ms
+                                  because that wait is executed 4 times
+                                  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                                  */
+                                 std::lock_guard<std::mutex> lock(sumMutex);
+                                 
+                                 sum += localSum;
+                                 
+                             }
+                             );
+
+        start = end;
+    }
+    
+    
+    for (auto& thread : threads)
+    {
+        thread.join(); // block here until the worker has finished executing
+    }
+    
+    /*
+    auto ts1 = std::chrono::steady_clock::now();
+    std::chrono::duration<double> serialElapsed = ts1 - ts0;
+    std::cout << "Time taken: " << serialElapsed.count() << "\n";
+     */
+    
+    return sum / (nx * ny);
+
+}
+
+
+
+
+
+// SAVING FIELDS
 void Field::saveCSV(const std::string& filename) const
 {
     std::ofstream file(filename);

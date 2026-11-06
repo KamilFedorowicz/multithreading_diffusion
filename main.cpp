@@ -86,8 +86,10 @@ int main(int argc, const char * argv[]) {
     std::cout << "Serial, multithread, persistent averages: " << fieldSerial.calcFieldAverage() << " " << fieldMultithread.calcFieldAverage() << " " << fieldPersistent.calcFieldAverage() << std::endl;
     
     double avgMultithread = fieldPersistent.calcFieldAverageMultithread();
+    std::cout << "Multithreading average: " << avgMultithread << std::endl;
     
-    std::cout << "Multithreading sum: " << avgMultithread << std::endl;
+    double avgMutex = fieldPersistent.calcFieldAverageMutex();
+    std::cout << "Mutex average: " << avgMutex << std::endl;
     //fieldPersistent.printField();
     return 0;
 }

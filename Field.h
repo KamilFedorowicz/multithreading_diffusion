@@ -20,6 +20,7 @@ public:
     void saveCSV(const std::string& filename) const;
     double calcFieldAverage() const; // just a function to check convergence
     double calcFieldAverageMultithread() const;
+    double calcFieldAverageMutex() const;
     
 private:
     std::size_t nx, ny;
